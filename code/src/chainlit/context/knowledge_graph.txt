@@ -1,0 +1,25 @@
+**Nodes (Entities):**
+
+*   **SiteA:**
+    *   Name: Bank Customer Onboarding
+    *   URL: http://localhost:5000/sitea.html
+    *   Role: Target update site
+    *   Description: A bank customer onboarding portal that collects detailed customer information (name, DOB, address, etc.). Certain fields (e.g. Bank Id) require data from a reference source.
+
+*   **SiteB:**
+    *   Name: Contact Information Portal
+    *   URL: http://localhost:5000/siteb.html
+    *   Role: Target update site
+    *   Description: A portal designed for managing corporate contact information such as contact name, email, phone, and office address.
+
+*   **SiteC:**
+    *   Name: Transaction Lookup
+    *   URL: http://localhost:5000/sitec.html
+    *   Role: Reference data source
+    *   Description: A reference application that allows users to input a transaction number and retrieves transaction details like amount, date, and status etc.
+
+**Edges (Relationships):**
+
+*   SiteA --(references transaction details from SiteC)--> SiteC
+*   SiteC --(Acts as a reference application)--> SiteA
+*   SiteC --(Acts as a reference application)--> SiteB

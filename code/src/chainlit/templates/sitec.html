@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Site C - Transaction Lookup</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    .field { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; }
+    input { padding: 5px; width: 300px; }
+    button { margin-right: 5px; }
+    #txn_result { border: 1px solid #ccc; padding: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Transaction Lookup</h1>
+  <div class="field">
+    <label for="txn_lookup">Enter Transaction Number:</label>
+    <input type="text" id="txn_lookup" value="">
+    <button id="txn_lookup_submit">Submit</button>
+  </div>
+  <div class="field">
+    <label>Transaction Details:</label>
+    <div id="txn_result"></div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('txn_lookup_submit').addEventListener('click', function() {
+        const txnNumber = document.getElementById('txn_lookup').value;
+        let details = "";
+        if (txnNumber.trim() !== "") {
+          // Simulate lookup – in a real app, an AJAX call might fetch these details.
+          details = `Transaction Number: ${txnNumber}<br>Amount: $100<br>Bank Identification Number: WF123456<br>Date: 2025-01-01<br>Status: Completed`;
+        } else {
+          details = "Please enter a valid transaction number.";
+        }
+        document.getElementById('txn_result').innerHTML = details;
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Site B - Contact Information</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    .field { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; }
+    input { padding: 5px; width: 300px; }
+    button { margin-right: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Contact Information</h1>
+  <div class="field">
+    <label for="contact_name">Contact Name:</label>
+    <input type="text" id="contact_name" value="Jane Smith" disabled>
+    <button id="contact_name_edit">Edit</button>
+    <button id="contact_name_save" disabled>Save</button>
+  </div>
+  <div class="field">
+    <label for="contact_email">Email:</label>
+    <input type="email" id="contact_email" value="jane.smith@example.com" disabled>
+    <button id="contact_email_edit">Edit</button>
+    <button id="contact_email_save" disabled>Save</button>
+  </div>
+  <div class="field">
+    <label for="contact_phone">Phone:</label>
+    <input type="text" id="contact_phone" value="555-6789" disabled>
+    <button id="contact_phone_edit">Edit</button>
+    <button id="contact_phone_save" disabled>Save</button>
+  </div>
+  <div class="field">
+    <label for="office_address">Office Address:</label>
+    <input type="text" id="office_address" value="456 Corporate Blvd, Metropolis" disabled>
+    <button id="office_address_edit">Edit</button>
+    <button id="office_address_save" disabled>Save</button>
+  </div>
+  
+  <script>
+    function enableField(id) {
+      document.getElementById(id).disabled = false;
+    }
+    function disableField(id) {
+      document.getElementById(id).disabled = true;
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      // Contact Name
+      document.getElementById('contact_name_edit').addEventListener('click', function() {
+        enableField('contact_name');
+        enableField('contact_name_save');
+      });
+      document.getElementById('contact_name_save').addEventListener('click', function() {
+        disableField('contact_name');
+        disableField('contact_name_save');
+      });
+      // Email
+      document.getElementById('contact_email_edit').addEventListener('click', function() {
+        enableField('contact_email');
+        enableField('contact_email_save');
+      });
+      document.getElementById('contact_email_save').addEventListener('click', function() {
+        disableField('contact_email');
+        disableField('contact_email_save');
+      });
+      // Phone
+      document.getElementById('contact_phone_edit').addEventListener('click', function() {
+        enableField('contact_phone');
+        enableField('contact_phone_save');
+      });
+      document.getElementById('contact_phone_save').addEventListener('click', function() {
+        disableField('contact_phone');
+        disableField('contact_phone_save');
+      });
+      // Office Address
+      document.getElementById('office_address_edit').addEventListener('click', function() {
+        enableField('office_address');
+        enableField('office_address_save');
+      });
+      document.getElementById('office_address_save').addEventListener('click', function() {
+        disableField('office_address');
+        disableField('office_address_save');
+      });
+    });
+  </script>
+</body>
+</html>

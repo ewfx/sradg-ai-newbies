@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Site A - Bank Customer Onboarding</title>
+    <style>
+      body { font-family: Arial, sans-serif; }
+      .field { margin-bottom: 15px; }
+      label { display: block; margin-bottom: 5px; }
+      input { padding: 5px; width: 300px; }
+      button { margin-right: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Bank Customer Onboarding</h1>
+    
+    <!-- Customer Information Fields -->
+    <div class="field">
+      <label for="customer_name">Customer Name:</label>
+      <input type="text" id="customer_name" value="John Doe" disabled>
+      <button id="customer_name_edit">Edit</button>
+      <button id="customer_name_save" disabled>Save</button>
+    </div>
+    
+    <div class="field">
+      <label for="dob">Date of Birth:</label>
+      <input type="date" id="dob" value="1980-01-01" disabled>
+      <button id="dob_edit">Edit</button>
+      <button id="dob_save" disabled>Save</button>
+    </div>
+    
+    <div class="field">
+      <label for="address">Address:</label>
+      <input type="text" id="address" value="123 Main St, Metropolis" disabled>
+      <button id="address_edit">Edit</button>
+      <button id="address_save" disabled>Save</button>
+    </div>
+    
+    <div class="field">
+      <label for="email">Email:</label>
+      <input type="email" id="email" value="john.doe@example.com" disabled>
+      <button id="email_edit">Edit</button>
+      <button id="email_save" disabled>Save</button>
+    </div>
+    
+    <div class="field">
+      <label for="phone">Phone:</label>
+      <input type="text" id="phone" value="555-1234" disabled>
+      <button id="phone_edit">Edit</button>
+      <button id="phone_save" disabled>Save</button>
+    </div>
+    
+    <div class="field">
+      <label for="bank_id">Bank Identification Number:</label>
+      <input type="text" id="bank_id" value="XXXXXXXX" disabled>
+      <button id="bank_id_edit">Edit</button>
+      <button id="bank_id_submit" disabled>Submit</button>
+    </div>
+    
+    <script>
+      function enableField(id) {
+         document.getElementById(id).disabled = false;
+      }
+      function disableField(id) {
+         document.getElementById(id).disabled = true;
+      }
+      
+      document.addEventListener('DOMContentLoaded', function() {
+          // Customer Name
+          document.getElementById('customer_name_edit').addEventListener('click', function() {
+              enableField('customer_name');
+              enableField('customer_name_save');
+          });
+          document.getElementById('customer_name_save').addEventListener('click', function() {
+              disableField('customer_name');
+              disableField('customer_name_save');
+          });
+          
+          // Date of Birth
+          document.getElementById('dob_edit').addEventListener('click', function() {
+              enableField('dob');
+              enableField('dob_save');
+          });
+          document.getElementById('dob_save').addEventListener('click', function() {
+              disableField('dob');
+              disableField('dob_save');
+          });
+          
+          // Address
+          document.getElementById('address_edit').addEventListener('click', function() {
+              enableField('address');
+              enableField('address_save');
+          });
+          document.getElementById('address_save').addEventListener('click', function() {
+              disableField('address');
+              disableField('address_save');
+          });
+          
+          // Email
+          document.getElementById('email_edit').addEventListener('click', function() {
+              enableField('email');
+              enableField('email_save');
+          });
+          document.getElementById('email_save').addEventListener('click', function() {
+              disableField('email');
+              disableField('email_save');
+          });
+          
+          // Phone
+          document.getElementById('phone_edit').addEventListener('click', function() {
+              enableField('phone');
+              enableField('phone_save');
+          });
+          document.getElementById('phone_save').addEventListener('click', function() {
+              disableField('phone');
+              disableField('phone_save');
+          });
+          
+          // Transaction Number: Enable editing and submission
+          document.getElementById('bank_id_edit').addEventListener('click', function() {
+              enableField('bank_id');
+              enableField('bank_id_submit');
+          });
+          document.getElementById('bank_id_submit').addEventListener('click', function() {
+              disableField('bank_id');
+              disableField('bank_id_submit');
+          });
+      });
+    </script>
+</body>
+</html>
