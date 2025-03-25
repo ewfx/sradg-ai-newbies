@@ -5,6 +5,7 @@ load_dotenv()
 
 import chainlit as cl
 from tools import sqlite_tool
+from agents.anomaly_action_agent import AnomalyAction
 import requests
 from agents.react_agent import ReactAgent
 from prompts.personas import RECON_PERSONA
@@ -17,7 +18,16 @@ commands = [
     {"id": "Recon", "icon": "bot", "description": "Assistant will analyze the reconciled data and detect anomalies"},
 ]
 
-
+# Initialize the AnomalyAction
+anomaly_action = AnomalyAction(
+    jira_url="https://sradghackathon.atlassian.net",
+    jira_username="tejaswiavvaru@gmail.com",
+    jira_api_token=os.getenv("JIRA_API_TOKEN"),
+    smtp_server="smtp.gmail.com",
+    smtp_port=587,
+    email_username="tejaswiavvaru@gmail.com",
+    email_password=os.getenv("GMAIL_TOKEN")
+)
 
 @cl.set_chat_profiles
 async def chat_profile():
@@ -262,13 +272,25 @@ async def on_chat_start():
                             cl.Action(name="Later", payload={"value": "cancel"}, label="❌ No, maybe later."),
                     ],
                     ).send()
-                else:
-                    await cl.Message(content=f"❌ {result['message']}").send()
+                    if action_message and action_message.get("payload", {}).get("value") == "continue":
+                        # Filter data for anomalies
+                        anomalies = table[table["Anomaly Detected"] == "Yes"]
+
+                        # Process anomalies and create JIRA tickets
+                        print("anomalies",anomalies)
+                        ticket_numbers = await anomaly_action.handle_anomalies_and_create_tickets(anomalies)
+
+                        # Notify the user about the ticket
+                        if ticket_numbers:
+                            await cl.Message(content=f"✅ JIRA tickets created successfully! Ticket Numbers: {', '.join(ticket_numbers)}").send()
+                            await cl.Message(content="📧 Email notifications sent for high-priority tickets.").send()
+                        else:
+                            await cl.Message(content=f"❌ {result['message']}").send()
 
             except Exception as e:
                 await cl.Message(
-                content=f"❌ Error during anomaly detection: {str(e)}"
-            ).send()
+                    content=f"❌ Error during anomaly detection: {str(e)}"
+                ).send()
         else:
             await cl.Message(
                 content=f"❌ No new rows were inserted. All rows were duplicates."

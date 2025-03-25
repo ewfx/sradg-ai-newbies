@@ -5,6 +5,7 @@ import sqlite3
 import re
 import time
 import os 
+from langchain.prompts import ChatPromptTemplate  # Import ChatPromptTemplate
 
 # Define the path to the prompt file
 PROMPT_FILE_PATH = os.path.join("prompts", "anomaly_detection_prompt.txt")
@@ -14,8 +15,7 @@ def load_prompt():
     with open(PROMPT_FILE_PATH, "r") as file:
         return file.read()
 
-# Inside your function
-prompt_template = load_prompt()
+
 
 def detect_anomalies(DB_PATH: str, table_name: str) -> str:
     """
@@ -28,7 +28,14 @@ def detect_anomalies(DB_PATH: str, table_name: str) -> str:
     Returns:
         str: A summary of detected anomalies.
     """
+   
     try:
+        # Load the detector API key
+        detector_api_key = os.getenv("GEMINI_DETECTOR_API_KEY")
+        genai.configure(api_key=detector_api_key)
+        
+
+        print("inside Try 1")
         # Connect to the SQLite database
         conn = sqlite3.connect(DB_PATH)
         # SQLite DB2 connection setup
@@ -39,6 +46,7 @@ def detect_anomalies(DB_PATH: str, table_name: str) -> str:
 
         # Connect to database and get the reconciled details
         data = pd.read_sql(f'SELECT * FROM "{table_name}"', conn)
+        print("after read_sql")
 
         if data.empty:
             return "No data available for analysis"
@@ -48,8 +56,10 @@ def detect_anomalies(DB_PATH: str, table_name: str) -> str:
 
         # Process each account separately
         account_au_combinations  = data[['Account', 'AU']].drop_duplicates()
+        print("account_au_combinations:", account_au_combinations)
 
         def parse_gemini_response(response_text):
+            print("in parse_gemini_response")
             """Extract Anomaly_Detected, Category, Possible Cause, and Recommended Actions from Gemini's response."""
             #print("response_text:", response_text)  # Log the full response text for debugging
 
@@ -84,7 +94,7 @@ def detect_anomalies(DB_PATH: str, table_name: str) -> str:
 
         for _, row in account_au_combinations.iterrows(): 
             account, au = row['Account'], row['AU'] 
-            # print(f"\n🔍 **Processing Account: {account}, AU: {au}**")
+            print(f"\n🔍 **Processing Account: {account}, AU: {au}**")
 
             df_subset = data[(data['Account'] == account) & (data['AU'] == au)].copy()
             db_date = df_subset['As of Date'].max()
@@ -97,9 +107,72 @@ def detect_anomalies(DB_PATH: str, table_name: str) -> str:
 
             # Filter only the latest month's data
             df_latest = df_subset[df_subset['As of Date'] == latest_date]
-
+            print("Before")
+            print("latest_date:", latest_date)
             # Customize the prompt with dynamic data
-            prompt = prompt_template.format(latest_date=latest_date.strftime('%Y-%m-%d'))
+            # print("prompt_template:", prompt_template)
+            # #prompt = prompt_template.format(latest_date)
+            # prompt_template = ChatPromptTemplate.from_template(load_prompt())
+            # print("After")
+            prompt = f"""
+
+            You are an AI reconciliation report analyzer. The dataset contains historical reconciliation records for multiple Account-AU combinations.
+            Your task is to detect anomalies in the 'Balance Difference' column when 'Match Status' is 'Break' and return only the **latest month's anomalies**.
+
+            **Dataset Columns:**
+            - 'As of Date': Month-end date
+            - 'Company', 'Account', 'AU', 'Currency'
+            - 'Primary Account', 'Secondary Account'
+            - 'GL Balance', 'IHub Balance', 'Balance Difference'
+            - 'Match Status': Indicates "Match" or "Break"
+            - 'Comments': Contains observations (or) can be empty 
+
+            ### **Instructions:**
+            1. Consider all 'Break' records for each **Account-AU** combination.
+            2. Analyze the 'Balance Difference' column for deviations from historical patterns
+            3. If there is any  inconsistency, or deviation, set `Anomaly_Detected` to `"Yes"`. Otherwise, set it to `"No"`.
+            4. Ensure that the `Anomaly_Detected` field is consistent with the description provided in the `Possible Cause` field.
+            5. Provide a clear explanation for your decision in the `Possible Cause` field.
+            6. Suggest actionable recommendations in the `Recommended Actions` field (limit: 255 characters).
+
+            ### **Response Format:**
+            # Provide the response in the following structured format:
+            # anomalies: <Yes/No>  ('Yes' when there is no trend/pattern followed in Balance Difference, or if there is any Unusual spike/Inconsistencies or any deviations, Otherwise return No)
+            # Category: <One of the predefined categories mentioned below> 
+            # Possible Cause: <Brief explanation of the cause> 
+            # Recommended Actions: <Specific and actionable recommendations>
+
+            ### **Predefined Categories:**
+            1. **Unposted journal entries**
+            2. **Late adjustments**
+            3. **Data sync delays between GL and iHub**
+            4. **Incorrect mapping of transactions**
+            5. **Missing or duplicate entries**
+            6. **Foreign exchange rate differences**
+            7. **System timing differences**
+
+            ### **Example Responses:**
+
+            #### Example 1 (Anomaly Detected):
+            # For **Account: XYZ123, AU: 45678** (Latest Month: {latest_date.strftime('%Y-%m-%d')})
+            Anomaly_Detected: Yes 
+            Category: Incorrect mapping of transactions
+            Possible Cause: Sudden unaccounted transaction or data entry error 
+            Recommended Actions: Verify entries for April, check system logs
+
+            #### Example 2 (No Anomaly Detected):
+            # For **Account: ABC456, AU: 78910** (Latest Month: {latest_date.strftime('%Y-%m-%d')})
+            Anomaly_Detected: No 
+            Category: N/A 
+            Possible Cause: Not provided 
+            Recommended Actions: Not provided
+            
+
+            # ### **Data for Analysis (Historical Break Records)**
+            
+            # Append historical data for each Account-AU to the prompt
+
+            """
 
             for _, row in df_subset.iterrows():
                 prompt += f"\n#### **Account: {row['Account']}, AU: {row['AU']}**\n"
@@ -107,8 +180,11 @@ def detect_anomalies(DB_PATH: str, table_name: str) -> str:
                 prompt += f"**Balance Difference:** ${row['Balance Difference']}M\n"
 
             # Send the prompt to Gemini
+            print("Before generating model")
             model = genai.GenerativeModel("gemini-1.5-pro")
+            print("Before generating content")
             response = model.generate_content(prompt)
+            print("After generating content")
             gemini_reasoning = response.text
             #print("Gemini Reasoning:", gemini_reasoning)
             # Parse Gemini Response

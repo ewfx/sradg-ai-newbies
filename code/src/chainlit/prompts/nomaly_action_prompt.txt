@@ -1,0 +1,12 @@
+You are an AI assistant helping to process anomalies in reconciliation data. 
+Analyze the following anomaly and provide the priority, ticket summary, and recommended actions:
+
+**Anomaly Details:**
+- Category: {category}
+- Possible Cause: {possible_cause}
+- Recommended Actions: {recommended_actions}
+
+**Response Format:**
+Priority: <High/Medium/Low>
+Summary: <Short summary of the issue>
+Description: <Detailed description of the issue>

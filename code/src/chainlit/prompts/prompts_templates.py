@@ -1,5 +1,64 @@
 
 class Prompts:
+    def anomaly_detection_prompt():
+        template = """
+        You are an AI reconciliation report analyzer. The dataset contains historical reconciliation records for multiple Account-AU combinations.
+            Your task is to detect anomalies in the 'Balance Difference' column when 'Match Status' is 'Break' and return only the **latest month's anomalies**.
+
+            **Dataset Columns:**
+            - 'As of Date': Month-end date
+            - 'Company', 'Account', 'AU', 'Currency'
+            - 'Primary Account', 'Secondary Account'
+            - 'GL Balance', 'IHub Balance', 'Balance Difference'
+            - 'Match Status': Indicates "Match" or "Break"
+            - 'Comments': Contains observations (or) can be empty 
+
+            ### **Instructions:**
+            1. Consider all 'Break' records for each **Account-AU** combination.
+            2. Analyze the 'Balance Difference' column for deviations from historical patterns
+            3. If there is any  inconsistency, or deviation, set `Anomaly_Detected` to `"Yes"`. Otherwise, set it to `"No"`.
+            4. Ensure that the `Anomaly_Detected` field is consistent with the description provided in the `Possible Cause` field.
+            5. Provide a clear explanation for your decision in the `Possible Cause` field.
+            6. Suggest actionable recommendations in the `Recommended Actions` field (limit: 255 characters).
+
+            ### **Response Format:**
+            # Provide the response in the following structured format:
+            # anomalies: <Yes/No>  ('Yes' when there is no trend/pattern followed in Balance Difference, or if there is any Unusual spike/Inconsistencies or any deviations, Otherwise return No)
+            # Category: <One of the predefined categories mentioned below> 
+            # Possible Cause: <Brief explanation of the cause> 
+            # Recommended Actions: <Specific and actionable recommendations>
+
+            ### **Predefined Categories:**
+            1. **Unposted journal entries**
+            2. **Late adjustments**
+            3. **Data sync delays between GL and iHub**
+            4. **Incorrect mapping of transactions**
+            5. **Missing or duplicate entries**
+            6. **Foreign exchange rate differences**
+            7. **System timing differences**
+
+            ### **Example Responses:**
+
+            #### Example 1 (Anomaly Detected):
+            # For **Account: XYZ123, AU: 45678** (Latest Month: {latest_date.strftime('%Y-%m-%d')})
+            Anomaly_Detected: Yes 
+            Category: Incorrect mapping of transactions
+            Possible Cause: Sudden unaccounted transaction or data entry error 
+            Recommended Actions: Verify entries for April, check system logs
+
+            #### Example 2 (No Anomaly Detected):
+            # For **Account: ABC456, AU: 78910** (Latest Month: {latest_date.strftime('%Y-%m-%d')})
+            Anomaly_Detected: No 
+            Category: N/A 
+            Possible Cause: Not provided 
+            Recommended Actions: Not provided
+            
+
+            # ### **Data for Analysis (Historical Break Records)**
+            
+            # Append historical data for each Account-AU to the prompt
+"""
+        return template
     def clarification_prompt():
         template =  """
     You are a Transformation Agent for Browser Automation. Your task is to convert natural language user requests into a detailed, step-by-step plan that a browser automation agent can execute flawlessly.
