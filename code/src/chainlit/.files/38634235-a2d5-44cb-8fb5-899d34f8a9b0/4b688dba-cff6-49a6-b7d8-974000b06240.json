@@ -1,0 +1,10 @@
+{
+    "status": "Done",
+    "tasks": [
+        {
+            "title": "🔍 Analyzing with ReAct Agent",
+            "status": "done",
+            "forId": null
+        }
+    ]
+}
