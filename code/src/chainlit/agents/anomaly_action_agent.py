@@ -7,7 +7,7 @@ class AnomalyAction:
     def __init__(self, jira_url, jira_username, jira_api_token, smtp_server, smtp_port, email_username, email_password):
         self.jira_handler = JiraHandler(jira_url, jira_username, jira_api_token)
         self.email_handler = EmailHandler(smtp_server, smtp_port, email_username, email_password)
-        detector_api_key = os.getenv("GEMINI_DETECTOR_API_KEY")
+        detector_api_key = os.getenv("GEMINI_ACTION_API_KEY")
         genai.configure(api_key=detector_api_key)
         self.llm = genai.GenerativeModel("gemini-1.5-pro")
 
@@ -27,7 +27,7 @@ class AnomalyAction:
 
         **Response Format:**
         Priority: <High/Medium/Low>
-        Summary: <Short summary of the issue and append {Account} and {AU} as name:value pairs>
+        Summary: <Short summary of the issue and append {Account} and {AU} for reference>
         Description: <Detailed description of the issue and append {category}, {possible_cause} and {recommended_actions}>
         """
         # List to store all ticket numbers

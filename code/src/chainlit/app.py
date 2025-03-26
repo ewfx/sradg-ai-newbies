@@ -293,7 +293,7 @@ async def on_chat_start():
                         # Notify the user about the ticket
                         if ticket_numbers:
                             await cl.Message(content=f"✅ JIRA tickets created successfully! Ticket Numbers: {', '.join(ticket_numbers)}").send()
-                            await cl.Message(content="📧 Email notifications sent for high-priority tickets.").send()
+                            await cl.Message(content="📧 Email notifications sent for JIRA tickets.").send()
                         else:
                             await cl.Message(content=f"❌ {result['message']}").send()
                     elif action_message and action_message.get("payload", {}).get("value") == "cancel":

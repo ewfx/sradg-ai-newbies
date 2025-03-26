@@ -4,7 +4,7 @@ import pandas as pd
 # Define database file
 db_file = "mydatabase.db"
 table_name = "General_IHub"
-excel_file = r"C:\Users\tejas\Anomaly_detect_on_recon\data\IHub_Reconciliatuion_hist.xlsx"  # Change this to your actual Excel file
+excel_file = r"C:\Users\tejas\sradg-ai-newbies\data\IHub_Reconciliatuion_hist.xlsx"  # Change this to your actual Excel file
 
 # Read Excel file into DataFrame
 df = pd.read_excel(excel_file, engine="openpyxl")
