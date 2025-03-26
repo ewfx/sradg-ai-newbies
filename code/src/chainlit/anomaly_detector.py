@@ -31,7 +31,7 @@ def detect_anomalies(DB_PATH: str, table_name: str) -> str:
    
     try:
         # Load the detector API key
-        detector_api_key = os.getenv("GEMINI_DETECTOR_API_KEY")
+        detector_api_key = os.getenv("GEMINI_API_KEY")
         genai.configure(api_key=detector_api_key)
         
 
@@ -195,8 +195,8 @@ def detect_anomalies(DB_PATH: str, table_name: str) -> str:
             print("recommended_actions:", recommended_actions)
             # Execute the update query
             cursor.execute(
-                f'UPDATE "{table_name}" SET anomaly_detected = ?, category = ?, possible_cause = ?, recommended_actions = ? WHERE "As of Date" = ? AND Account = ? AND AU = ?',
-                (anomaly_detected, category, possible_cause, recommended_actions, db_date, account, au)
+                f'UPDATE "{table_name}" SET anomaly_detected = ?, category = ?, possible_cause = ?, recommended_actions = ?, feedback_taken = ? WHERE "As of Date" = ? AND Account = ? AND AU = ?',
+                (anomaly_detected, category, possible_cause, recommended_actions, "No", db_date, account, au)
             )
 
         try:

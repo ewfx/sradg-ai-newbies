@@ -5,7 +5,10 @@ load_dotenv()
 
 import chainlit as cl
 from tools import sqlite_tool
+from tools.feedback import handle_feedback
 from agents.anomaly_action_agent import AnomalyAction
+from agents.jira_comments_monitor_agent import JiraCommentsMonitorAgent
+from agents import browser_agent
 import requests
 from agents.react_agent import ReactAgent
 from prompts.personas import RECON_PERSONA
@@ -16,6 +19,8 @@ import sqlite3
 
 commands = [
     {"id": "Recon", "icon": "bot", "description": "Assistant will analyze the reconciled data and detect anomalies"},
+    {"id": "monitor", "icon": "bot", "description": "Monitor JIRA tickets and connect to core systems to update details"},
+    {"id": "feedback", "icon": "bot", "description": "Take feedback on detected anomalies and update the system"},
 ]
 
 # Initialize the AnomalyAction
@@ -27,6 +32,12 @@ anomaly_action = AnomalyAction(
     smtp_port=587,
     email_username="tejaswiavvaru@gmail.com",
     email_password=os.getenv("GMAIL_TOKEN")
+)
+# Initialize the JiraCommentsMonitorAgent
+jira_monitor = JiraCommentsMonitorAgent(
+    jira_url="https://sradghackathon.atlassian.net",
+    jira_username="tejaswiavvaru@gmail.com",
+    jira_api_token=os.getenv("JIRA_API_TOKEN")
 )
 
 @cl.set_chat_profiles
@@ -113,7 +124,7 @@ async def on_chat_start():
                 "As of Date", "Company", "Account", "AU", "Currency",
                 "Primary Account", "Secondary Account", "GL Balance",
                 "IHub Balance", "Balance Difference", "Match Status", "Comments",
-                "anomaly_detected", "category", "possible_cause", "recommended_actions"
+                "anomaly_detected", "category", "possible_cause", "recommended_actions", "feedback_taken"
             ]
             # Format the results into a table
             table = pd.DataFrame(rows, columns=columns)
@@ -247,7 +258,7 @@ async def on_chat_start():
 
                     # Use the unique combinations extracted from the Excel file
                     query = f"""
-                        SELECT "As of Date", Account, AU, anomaly_detected, category, possible_cause, recommended_actions
+                        SELECT "As of Date", Account, AU, anomaly_detected, category, possible_cause, recommended_actions, feedback_taken
                         FROM {sqlite_tool_loc.table_name}
                         WHERE ("As of Date", Account, AU) IN ({','.join(['(?, ?, ?)'] * len(unique_combinations))})
                     """
@@ -258,17 +269,16 @@ async def on_chat_start():
                     rows = cursor.fetchall()
 
                     # Format the results into a table
-                    table = pd.DataFrame(rows, columns=["As of Date", "Account", "AU", "Anomaly Detected", "Category", "Possible Cause", "Recommended Actions"])
+                    table = pd.DataFrame(rows, columns=["As of Date", "Account", "AU", "Anomaly Detected", "Category", "Possible Cause", "Recommended Actions","Feedback Taken"])
                     await cl.Message(
                         content=f"Here are the updated results:\n\n{table.to_markdown(index=False)}"
                     ).send()
 
                     conn.close()
                     action_message = await cl.AskActionMessage(
-                        content="Do you me to see if I can take any action on detected Anomalies, If so click on 'Let's start Actiuon sequence'",
+                        content="Do you me to see if I can take any action on detected Anomalies, If so click on 'Let's start Action sequence'",
                         actions=[
                             cl.Action(name="Proceed", payload={"value": "continue"}, label="✅ Let's start Action Sequnce"),
-                            cl.Action(name="Proceed", payload={"value": "continue"}, label="🖥️ Switch to Catalyst System"),
                             cl.Action(name="Later", payload={"value": "cancel"}, label="❌ No, maybe later."),
                     ],
                     ).send()
@@ -286,6 +296,8 @@ async def on_chat_start():
                             await cl.Message(content="📧 Email notifications sent for high-priority tickets.").send()
                         else:
                             await cl.Message(content=f"❌ {result['message']}").send()
+                    elif action_message and action_message.get("payload", {}).get("value") == "cancel":
+                        await send_message(content="Okay, Then How may I help you today?")
 
             except Exception as e:
                 await cl.Message(
@@ -304,20 +316,65 @@ async def on_chat_start():
 
 @cl.on_message
 async def on_message(message: cl.Message):
-    query = message.content
-    recon_agent = ReactAgent(persona=RECON_PERSONA, system="General_IHub")
-    cl.user_session.set("react_agent", recon_agent)
-    recon_agent = cl.user_session.get("react_agent")
+    if message.command == "monitor":
+        plan_of_action = jira_monitor.monitor_recent_jira_comment(content=None)  # Pass content if needed
+        if plan_of_action:
+            await send_message(content =plan_of_action)
 
-    # Process with React agent
-    try:
-        final_response = await recon_agent.get_response(query)
-        # Update the message with the final answer
-        await cl.Message(content = final_response).send()
-        # await msg.update()
-    except Exception as e:
-        error = f"Error processing your request: {str(e)}"
-        await cl.Message(content=error).send()
+            action_message = await cl.AskActionMessage(
+                content= "If you are satisfied by the generated plan then should we go ahead?",
+                actions=[
+                    cl.Action(name="Execute it", payload={"value": "continue"}, label="✅ Execute It!!"),
+                    cl.Action(name="Cancel", payload={"value": "cancel"}, label="❌ Cancel"),
+                ],
+            ).send()
+
+        else:
+            await send_message(content="No plan of action generated.")
+
+        if action_message and action_message.get("payload", {}).get("value") == "continue":
+            await send_message(content = f"Executing the Automation task... Please wait")
+
+            asyncio.run(browser_agent.browser_agent_task(plan_of_action))
+            
+            await send_message(content = f"Completed the task!!")
+            
+        elif action_message and action_message.get("payload", {}).get("value") == "cancel":
+            await send_message(content="Plan execution cancelled.")
+    elif message.command == "feedback":
+        await handle_feedback()
+    elif message.command == "Recon":
+        query = message.content
+        recon_agent = ReactAgent(persona=RECON_PERSONA, system="General_IHub")
+        cl.user_session.set("react_agent", recon_agent)
+        recon_agent = cl.user_session.get("react_agent")
+
+        # Process with React agent
+        try:
+            final_response = await recon_agent.get_response(query)
+            # Update the message with the final answer
+            await cl.Message(content = final_response).send()
+            # await msg.update()
+        except Exception as e:
+            error = f"Error processing your request: {str(e)}"
+            await cl.Message(content=error).send()
+    else:               
+        query = message.content
+        recon_agent = ReactAgent(persona=RECON_PERSONA, system="General_IHub")
+        cl.user_session.set("react_agent", recon_agent)
+        recon_agent = cl.user_session.get("react_agent")
+
+        # Process with React agent
+        try:
+            final_response = await recon_agent.get_response(query)
+            # Update the message with the final answer
+            await cl.Message(content = final_response).send()
+            # await msg.update()
+        except Exception as e:
+            error = f"Error processing your request: {str(e)}"
+            await cl.Message(content=error).send()
+
+
 
     
 

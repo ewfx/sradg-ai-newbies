@@ -7,7 +7,7 @@ class AnomalyAction:
     def __init__(self, jira_url, jira_username, jira_api_token, smtp_server, smtp_port, email_username, email_password):
         self.jira_handler = JiraHandler(jira_url, jira_username, jira_api_token)
         self.email_handler = EmailHandler(smtp_server, smtp_port, email_username, email_password)
-        detector_api_key = os.getenv("GEMINI_ACTION_API_KEY")
+        detector_api_key = os.getenv("GEMINI_DETECTOR_API_KEY")
         genai.configure(api_key=detector_api_key)
         self.llm = genai.GenerativeModel("gemini-1.5-pro")
 
@@ -18,7 +18,7 @@ class AnomalyAction:
 
         prompt_template = """
         You are an AI assistant helping to process anomalies in reconciliation data. 
-        Analyze the following anomaly and provide the priority, ticket summary, and recommended actions:
+        Analyze the following anomaly and provide the priority, ticket summary, and Description:
 
         **Anomaly Details:**
         - Category: {category}
@@ -27,8 +27,8 @@ class AnomalyAction:
 
         **Response Format:**
         Priority: <High/Medium/Low>
-        Summary: <Short summary of the issue>
-        Description: <Detailed description of the issue>
+        Summary: <Short summary of the issue and append {Account} and {AU} as name:value pairs>
+        Description: <Detailed description of the issue and append {category}, {possible_cause} and {recommended_actions}>
         """
         # List to store all ticket numbers
         ticket_numbers = []
@@ -39,7 +39,9 @@ class AnomalyAction:
                 prompt = prompt_template.format(
                     category=row["Category"],
                     possible_cause=row["Possible Cause"],
-                    recommended_actions=row["Recommended Actions"]
+                    recommended_actions=row["Recommended Actions"],
+                    Account=row["Account"],
+                    AU=row["AU"]
                 )
 
                 # Use Gemini-1.5pro to analyze the anomaly and decide on ticket details
@@ -59,7 +61,7 @@ class AnomalyAction:
                 #if priority == "High":
                 subject = f"{priority} Priority JIRA Ticket Created: {ticket_number}"
                 body = (
-                    f"A high-priority JIRA ticket has been created:\n\n"
+                    f"JIRA ticket has been created:\n\n"
                     f"Summary: {summary}\n"
                     f"Description: {description}\n"
                     f"Ticket Number: {ticket_number}"

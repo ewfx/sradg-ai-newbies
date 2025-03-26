@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "../../.."
+		},
+		{
+			"path": "../../../../Anomaly_detect_on_recon/code/src/chainlit"
+		}
+	],
+	"settings": {}
+}

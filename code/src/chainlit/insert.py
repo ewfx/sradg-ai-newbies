@@ -18,7 +18,7 @@ cursor.execute(f'DROP TABLE IF EXISTS "{table_name}"')
 
 # Create table dynamically based on DataFrame columns and include additional columns
 columns = ", ".join([f'"{col}" TEXT' for col in df.columns])  # Wrap column names in double quotes
-additional_columns = '"anomaly_detected" TEXT, "category" TEXT, "possible_cause" TEXT, "recommended_actions" TEXT'
+additional_columns = '"anomaly_detected" TEXT, "category" TEXT, "possible_cause" TEXT, "recommended_actions" TEXT, "feedback_taken" TEXT'
 cursor.execute(f'CREATE TABLE IF NOT EXISTS "{table_name}" ({columns}, {additional_columns})')
 
 # Insert data into SQLite
